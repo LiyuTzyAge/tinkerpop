@@ -52,7 +52,7 @@ public interface VertexProgram<M> extends Cloneable {
      * Note that what is stored is simply the instance/configuration state, not any processed data.
      * The default implementation provided simply stores the VertexProgram class name for reflective reconstruction.
      * It is typically a good idea to VertexProgram.super.storeState().
-     *
+     * 保存图状态到vertexProgram中，用于序列化到其他machine上并行执行
      * @param configuration the configuration to store the state of the VertexProgram in.
      */
     public default void storeState(final Configuration configuration) {

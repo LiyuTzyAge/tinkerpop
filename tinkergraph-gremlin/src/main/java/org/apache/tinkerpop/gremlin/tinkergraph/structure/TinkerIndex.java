@@ -35,6 +35,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Marko A. Rodriguez (http://markorodriguez.com)
  */
 final class TinkerIndex<T extends Element> {
+    //索引数据结构
+    //key (propertyName)
+    // |--value (propertyValue)
+    //      |--element (vertex/edges)
 
     protected Map<String, Map<Object, Set<T>>> index = new ConcurrentHashMap<>();
     protected final Class<T> indexClass;
@@ -123,6 +127,10 @@ final class TinkerIndex<T extends Element> {
             this.remove(key, oldValue, element);
     }
 
+    /**
+     * 创建索引，如果数据已经存在会build已有数据
+     * @param key
+     */
     public void createKeyIndex(final String key) {
         if (null == key)
             throw Graph.Exceptions.argumentCanNotBeNull("key");

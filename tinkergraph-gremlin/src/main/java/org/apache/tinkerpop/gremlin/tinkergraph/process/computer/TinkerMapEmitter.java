@@ -40,6 +40,10 @@ public final class TinkerMapEmitter<K, V> implements MapReduce.MapEmitter<K, V> 
     public Queue<KeyValue<K, V>> mapQueue;
     private final boolean doReduce;
 
+    /**
+     * 是否存在reduce阶段
+     * @param doReduce
+     */
     public TinkerMapEmitter(final boolean doReduce) {
         this.doReduce = doReduce;
         if (this.doReduce)
@@ -48,14 +52,25 @@ public final class TinkerMapEmitter<K, V> implements MapReduce.MapEmitter<K, V> 
             this.mapQueue = new ConcurrentLinkedQueue<>();
     }
 
+    /**
+     * 将计算结果写入下一阶段内存
+     * @param key
+     * @param value
+     */
     @Override
     public void emit(K key, V value) {
         if (this.doReduce)
+            //写入reduce阶段
             this.reduceMap.computeIfAbsent(key, k -> new ConcurrentLinkedQueue<>()).add(value);
         else
+            //写入map阶段
             this.mapQueue.add(new KeyValue<>(key, value));
     }
 
+    /**
+     * 为结果进行排序
+     * @param mapReduce
+     */
     protected void complete(final MapReduce<K, V, ?, ?, ?> mapReduce) {
         if (!this.doReduce && mapReduce.getMapKeySort().isPresent()) {
             final Comparator<K> comparator = mapReduce.getMapKeySort().get();

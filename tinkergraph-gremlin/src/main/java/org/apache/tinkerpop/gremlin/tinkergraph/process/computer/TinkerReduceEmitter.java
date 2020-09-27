@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author Marko A. Rodriguez (http://markorodriguez.com)
  */
 public final class TinkerReduceEmitter<OK, OV> implements MapReduce.ReduceEmitter<OK, OV> {
-
+    //reduce 计算结果
     protected Queue<KeyValue<OK, OV>> reduceQueue = new ConcurrentLinkedQueue<>();
 
     @Override

@@ -37,22 +37,30 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class TinkerMemory implements Memory.Admin {
 
+    //保存所有有效的key，perviousMap和currentMap中的key需要在此范围中
     public final Set<String> memoryKeys = new HashSet<>();
+    //保存原始数据状态，当某一个阶段完成则更新previousMap
     public Map<String, Object> previousMap;
+    //保存当前计算中的数据
     public Map<String, Object> currentMap;
+    //迭代计数
     private final AtomicInteger iteration = new AtomicInteger(0);
+    //任务执行时间
     private final AtomicLong runtime = new AtomicLong(0l);
 
     public TinkerMemory(final VertexProgram<?> vertexProgram, final Set<MapReduce> mapReducers) {
         this.currentMap = new ConcurrentHashMap<>();
         this.previousMap = new ConcurrentHashMap<>();
+        //??
         if (null != vertexProgram) {
+            //MemoryComputeKeys存在于整个计算声明周期
             for (final String key : vertexProgram.getMemoryComputeKeys()) {
                 MemoryHelper.validateKey(key);
                 this.memoryKeys.add(key);
             }
         }
         for (final MapReduce mapReduce : mapReducers) {
+            //MemoryKey 为mapReducer任务输出结果对应的key，对应一个mapReduce任务
             this.memoryKeys.add(mapReduce.getMemoryKey());
         }
     }
@@ -111,6 +119,13 @@ public final class TinkerMemory implements Memory.Admin {
             return r;
     }
 
+    /**
+     * 更新currentMap中的value
+     * 如果key不存在于memoryKeys中，则异常，否则进行更新
+     * 更新存在三种类型（long，bool，object）
+     * @param key   the key of the long value
+     * @param delta the adjusting amount (can be negative for decrement)
+     */
     @Override
     public void incr(final String key, final long delta) {
         checkKeyValue(key, delta);

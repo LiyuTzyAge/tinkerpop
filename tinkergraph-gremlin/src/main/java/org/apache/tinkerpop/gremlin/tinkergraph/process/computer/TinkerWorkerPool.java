@@ -39,7 +39,7 @@ public final class TinkerWorkerPool implements AutoCloseable {
 
     private final int numberOfWorkers;
     private final ExecutorService workerPool;
-
+    //共享队列
     private VertexProgramPool vertexProgramPool;
     private MapReducePool mapReducePool;
 
@@ -56,6 +56,10 @@ public final class TinkerWorkerPool implements AutoCloseable {
         this.mapReducePool = new MapReducePool(mapReduce, this.numberOfWorkers);
     }
 
+    /**
+     * 提交执行一个vertxProgram
+     * @param worker
+     */
     public void executeVertexProgram(final Consumer<VertexProgram> worker) {
         try {
             this.workerPool.submit(() -> {

@@ -42,6 +42,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -169,7 +170,8 @@ public final class ComputerGraph implements Graph {
 
         @Override
         public <V> Iterator<? extends Property<V>> properties(final String... propertyKeys) {
-            return (Iterator) IteratorUtils.filter(this.element.properties(propertyKeys), property -> !computeKeys.contains(property.key()));
+            Iterator<? extends Property<Object>> properties = this.element.properties(propertyKeys);
+            return (Iterator) IteratorUtils.filter(properties, property -> !computeKeys.contains(property.key()));
         }
 
         @Override
@@ -302,7 +304,8 @@ public final class ComputerGraph implements Graph {
 
         @Override
         public <V> Iterator<Property<V>> properties(final String... propertyKeys) {
-            return IteratorUtils.map(super.properties(propertyKeys), property -> new ComputerProperty(property));
+            Iterator<? extends Property<Object>> properties = super.properties(propertyKeys);
+            return IteratorUtils.map(properties, property -> new ComputerProperty(property));
         }
 
         @Override
@@ -340,7 +343,8 @@ public final class ComputerGraph implements Graph {
 
         @Override
         public <U> Iterator<Property<U>> properties(final String... propertyKeys) {
-            return IteratorUtils.map(super.properties(propertyKeys), property -> new ComputerProperty(property));
+            Iterator<? extends Property<U>> properties = super.properties(propertyKeys);
+            return IteratorUtils.map(properties, property -> new ComputerProperty<>(property));
         }
 
         @Override

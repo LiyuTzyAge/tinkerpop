@@ -71,13 +71,16 @@ import java.util.stream.Stream;
 public final class TinkerGraph implements Graph {
 
     static {
-        TraversalStrategies.GlobalCache.registerStrategies(TinkerGraph.class, TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone().addStrategies(TinkerGraphStepStrategy.instance()));
+        //注册TinkerGraph到GlobalCache中
+        TraversalStrategies.GlobalCache.registerStrategies(TinkerGraph.class,
+                //在Graph中添加TinkerGraphStepStrategy实例
+                TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone().addStrategies(TinkerGraphStepStrategy.instance()));
     }
 
     private static final Configuration EMPTY_CONFIGURATION = new BaseConfiguration() {{
         this.setProperty(Graph.GRAPH, TinkerGraph.class.getName());
     }};
-
+    //配置项名称
     public static final String CONFIG_VERTEX_ID = "gremlin.tinkergraph.vertexIdManager";
     public static final String CONFIG_EDGE_ID = "gremlin.tinkergraph.edgeIdManager";
     public static final String CONFIG_VERTEX_PROPERTY_ID = "gremlin.tinkergraph.vertexPropertyIdManager";
@@ -87,15 +90,18 @@ public final class TinkerGraph implements Graph {
 
     private final TinkerGraphFeatures features = new TinkerGraphFeatures();
 
+    //TinkerGraph内存数据结构
     protected AtomicLong currentId = new AtomicLong(-1l);
     protected Map<Object, Vertex> vertices = new ConcurrentHashMap<>();
     protected Map<Object, Edge> edges = new ConcurrentHashMap<>();
 
     protected TinkerGraphVariables variables = null;
     protected TinkerGraphComputerView graphComputerView = null;
+    //索引数据结构
     protected TinkerIndex<TinkerVertex> vertexIndex = null;
     protected TinkerIndex<TinkerEdge> edgeIndex = null;
 
+    //IdManager自动分配id
     protected final IdManager<?> vertexIdManager;
     protected final IdManager<?> edgeIdManager;
     protected final IdManager<?> vertexPropertyIdManager;
@@ -113,6 +119,7 @@ public final class TinkerGraph implements Graph {
         vertexIdManager = selectIdManager(configuration, CONFIG_VERTEX_ID, Vertex.class);
         edgeIdManager = selectIdManager(configuration, CONFIG_EDGE_ID, Edge.class);
         vertexPropertyIdManager = selectIdManager(configuration, CONFIG_VERTEX_PROPERTY_ID, VertexProperty.class);
+        //single,set,list = cardinality
         defaultVertexPropertyCardinality = VertexProperty.Cardinality.valueOf(
                 configuration.getString(CONFIG_DEFAULT_VERTEX_PROPERTY_CARDINALITY, VertexProperty.Cardinality.single.name()));
 
@@ -236,10 +243,16 @@ public final class TinkerGraph implements Graph {
         return createElementIterator(Edge.class, edges, edgeIdManager, edgeIds);
     }
 
+    /**
+     * 根据图序列化方式，加载图
+     */
     private void loadGraph() {
         final File f = new File(graphLocation);
         if (f.exists() && f.isFile()) {
             try {
+                //IoCore.graphml 指定序列化器
+                //io()  Graph接口中的方法，返回序列化器的IO类，用于读写文件
+                //readGraph() 加载文件将数据加载到当前实例中TinkerGraph
                 if (graphFormat.equals("graphml")) {
                     io(IoCore.graphml()).readGraph(graphLocation);
                 } else if (graphFormat.equals("graphson")) {
@@ -253,6 +266,7 @@ public final class TinkerGraph implements Graph {
         }
     }
 
+    //将图保存到文件中
     private void saveGraph() {
         final File f = new File(graphLocation);
         if (f.exists()) {
@@ -277,6 +291,7 @@ public final class TinkerGraph implements Graph {
         }
     }
 
+    //根据id查询数据
     private <T extends Element> Iterator<T> createElementIterator(final Class<T> clazz, final Map<Object, T> elements,
                                                                   final IdManager idManager,
                                                                   final Object... ids) {

@@ -60,10 +60,24 @@ public final class GraphComputerHelper {
         }
     }
 
+    /**
+     * 返回resultGraph，resultGraph->vertexProgram.isPresent()->vertexProgram
+     * .ResultGraph->GraphComputer.ResultGraph.ORIGINAL
+     * @param vertexProgram
+     * @param resultGraph
+     * @return
+     */
     public static GraphComputer.ResultGraph getResultGraphState(final Optional<VertexProgram> vertexProgram, final Optional<GraphComputer.ResultGraph> resultGraph) {
         return resultGraph.isPresent() ? resultGraph.get() : vertexProgram.isPresent() ? vertexProgram.get().getPreferredResultGraph() : GraphComputer.ResultGraph.ORIGINAL;
     }
 
+    /**
+     * 返回GraphComputer.Persist，persist->vertexProgram
+     * .PreferredPersist->Persist.NOTHING
+     * @param vertexProgram
+     * @param persist
+     * @return
+     */
     public static GraphComputer.Persist getPersistState(final Optional<VertexProgram> vertexProgram, final Optional<GraphComputer.Persist> persist) {
         return persist.isPresent() ? persist.get() : vertexProgram.isPresent() ? vertexProgram.get().getPreferredPersist() : GraphComputer.Persist.NOTHING;
     }

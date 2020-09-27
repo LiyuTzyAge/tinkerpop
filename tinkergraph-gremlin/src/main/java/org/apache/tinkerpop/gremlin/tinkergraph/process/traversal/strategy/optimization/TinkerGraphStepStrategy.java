@@ -37,6 +37,10 @@ public final class TinkerGraphStepStrategy extends AbstractTraversalStrategy<Tra
     private TinkerGraphStepStrategy() {
     }
 
+    /**
+     * 对每一个Admin对象，应用一次strategy
+     * @param traversal
+     */
     @Override
     public void apply(final Traversal.Admin<?, ?> traversal) {
         if (traversal.getEngine().isComputer())
@@ -44,10 +48,12 @@ public final class TinkerGraphStepStrategy extends AbstractTraversalStrategy<Tra
 
         final Step<?, ?> startStep = traversal.getStartStep();
         if (startStep instanceof GraphStep) {
+            //将原始GraphSetp替换成TinkerGraphStep，更换图操作方式
             final GraphStep<?> originalGraphStep = (GraphStep) startStep;
             final TinkerGraphStep<?> tinkerGraphStep = new TinkerGraphStep<>(originalGraphStep);
             TraversalHelper.replaceStep(startStep, (Step) tinkerGraphStep, traversal);
 
+            //将hasContainer的step替换成TinkerGraphStep的step
             Step<?, ?> currentStep = tinkerGraphStep.getNextStep();
             while (currentStep instanceof HasContainerHolder) {
                 ((HasContainerHolder) currentStep).getHasContainers().forEach(tinkerGraphStep::addHasContainer);

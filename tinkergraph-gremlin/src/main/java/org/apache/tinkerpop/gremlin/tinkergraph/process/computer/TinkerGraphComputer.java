@@ -84,6 +84,10 @@ public final class TinkerGraphComputer implements GraphComputer {
         return this;
     }
 
+    /**
+     * 执行
+     * @return
+     */
     @Override
     public Future<ComputerResult> submit() {
         // a graph computer can only be executed once
@@ -99,9 +103,11 @@ public final class TinkerGraphComputer implements GraphComputer {
             GraphComputerHelper.validateProgramOnComputer(this, this.vertexProgram);
             this.mapReducers.addAll(this.vertexProgram.getMapReducers());
         }
+        //缓存计算结果对象？？？
         // get the result graph and persist state to use for the computation
         this.resultGraph = GraphComputerHelper.getResultGraphState(Optional.ofNullable(this.vertexProgram), Optional.ofNullable(this.resultGraph));
         this.persist = GraphComputerHelper.getPersistState(Optional.ofNullable(this.vertexProgram), Optional.ofNullable(this.persist));
+        //是否支持combination操作
         if (!this.features().supportsResultGraphPersistCombination(this.resultGraph, this.persist))
             throw GraphComputer.Exceptions.resultGraphPersistCombinationNotSupported(this.resultGraph, this.persist);
 
@@ -113,10 +119,11 @@ public final class TinkerGraphComputer implements GraphComputer {
                 if (null != this.vertexProgram) {
                     TinkerHelper.createGraphComputerView(this.graph, this.vertexProgram.getElementComputeKeys());
                     // execute the vertex program
-                    this.vertexProgram.setup(this.memory);
-                    this.memory.completeSubRound();
+                    this.vertexProgram.setup(this.memory);  //设置内存
+                    this.memory.completeSubRound(); //拷贝内存
                     while (true) {
-                        workers.setVertexProgram(this.vertexProgram);
+                        workers.setVertexProgram(this.vertexProgram);   //设置运行程序
+                        //graph.vertices查询所有数据，存储到共享Iterator
                         final SynchronizedIterator<Vertex> vertices = new SynchronizedIterator<>(this.graph.vertices());
                         workers.executeVertexProgram(vertexProgram -> {
                             vertexProgram.workerIterationStart(this.memory.asImmutable());
@@ -131,8 +138,10 @@ public final class TinkerGraphComputer implements GraphComputer {
                             }
                             vertexProgram.workerIterationEnd(this.memory.asImmutable());
                         });
+                        //刷新消息和内存
                         this.messageBoard.completeIteration();
                         this.memory.completeSubRound();
+                        //判断是否结束，刷新内存
                         if (this.vertexProgram.terminate(this.memory)) {
                             this.memory.incrIteration();
                             this.memory.completeSubRound();
@@ -145,16 +154,25 @@ public final class TinkerGraphComputer implements GraphComputer {
                 }
 
                 // execute mapreduce jobs
+                //每个mapreduce都是 MAP+REDUCE阶段
                 for (final MapReduce mapReduce : mapReducers) {
+                    /*
+                    MAP STAGE
+                     */
                     if (mapReduce.doStage(MapReduce.Stage.MAP)) {
                         final TinkerMapEmitter<?, ?> mapEmitter = new TinkerMapEmitter<>(mapReduce.doStage(MapReduce.Stage.REDUCE));
+                        //同步iterator,缓存所有数据，为数据访问提供同步功能，或并行访问
+                        //但是没有结果对底层数据的实际并行访问，仍是多个线程访问单一数据源
                         final SynchronizedIterator<Vertex> vertices = new SynchronizedIterator<>(this.graph.vertices());
                         workers.setMapReduce(mapReduce);
+                        //并行执行map阶段程序
                         workers.executeMapReduce(workerMapReduce -> {
                             workerMapReduce.workerStart(MapReduce.Stage.MAP);
                             while (true) {
+                                //并行访问
                                 final Vertex vertex = vertices.next();
                                 if (null == vertex) break;
+                                //为每一个vertex执行map程序，并通过mapEmitter发送到下一阶段
                                 workerMapReduce.map(ComputerGraph.mapReduce(vertex), mapEmitter);
                             }
                             workerMapReduce.workerEnd(MapReduce.Stage.MAP);
@@ -162,9 +180,13 @@ public final class TinkerGraphComputer implements GraphComputer {
                         // sort results if a map output sort is defined
                         mapEmitter.complete(mapReduce);
 
+                        /*
+                        REDUCE STAGE
+                         */
                         // no need to run combiners as this is single machine
                         if (mapReduce.doStage(MapReduce.Stage.REDUCE)) {
                             final TinkerReduceEmitter<?, ?> reduceEmitter = new TinkerReduceEmitter<>();
+                            //上一阶段结果数据
                             final SynchronizedIterator<Map.Entry<?, Queue<?>>> keyValues = new SynchronizedIterator((Iterator) mapEmitter.reduceMap.entrySet().iterator());
                             workers.executeMapReduce(workerMapReduce -> {
                                 workerMapReduce.workerStart(MapReduce.Stage.REDUCE);

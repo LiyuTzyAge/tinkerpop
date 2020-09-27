@@ -37,6 +37,9 @@ final class TinkerMessageBoard<M> {
     public Set<MessageScope> previousMessageScopes = new HashSet<>();
     public Set<MessageScope> currentMessageScopes = new HashSet<>();
 
+    /**
+     * 迭代完成后更新数据
+     */
     public void completeIteration() {
         this.receiveMessages = this.sendMessages;
         this.sendMessages = new ConcurrentHashMap<>();

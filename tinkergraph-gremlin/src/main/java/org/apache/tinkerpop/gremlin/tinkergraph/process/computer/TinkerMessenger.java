@@ -55,6 +55,10 @@ public final class TinkerMessenger<M> implements Messenger<M> {
         this.combiner = combiner.isPresent() ? combiner.get() : null;
     }
 
+    /**
+     * 接收所有传入当前顶点的message
+     * @return
+     */
     @Override
     public Iterator<M> receiveMessages() {
         final MultiIterator<M> multiIterator = new MultiIterator<>();
@@ -88,12 +92,19 @@ public final class TinkerMessenger<M> implements Messenger<M> {
         if (messageScope instanceof MessageScope.Local) {
             addMessage(this.vertex, message);
         } else {
+            //全部vertex
             ((MessageScope.Global) messageScope).vertices().forEach(v -> addMessage(v, message));
         }
     }
 
+    /**
+     * 将message存放到vertex的queue中
+     * @param vertex
+     * @param message
+     */
     private void addMessage(final Vertex vertex, final M message) {
         final Queue<M> queue = this.messageBoard.sendMessages.computeIfAbsent(vertex, v -> new ConcurrentLinkedQueue<>());
+        //将两个消息合并再写入queue
         queue.add(null != this.combiner && !queue.isEmpty() ? this.combiner.combine(queue.remove(), message) : message);
     }
 

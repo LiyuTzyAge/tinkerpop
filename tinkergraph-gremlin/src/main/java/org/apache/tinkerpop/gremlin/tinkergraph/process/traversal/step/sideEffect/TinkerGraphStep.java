@@ -46,8 +46,10 @@ public final class TinkerGraphStep<S extends Element> extends GraphStep<S> imple
     private final List<HasContainer> hasContainers = new ArrayList<>();
 
     public TinkerGraphStep(final GraphStep<S> originalGraphStep) {
+        //traversal,返回值类型，输入ids
         super(originalGraphStep.getTraversal(), originalGraphStep.getReturnClass(), originalGraphStep.getIds());
         originalGraphStep.getLabels().forEach(this::addLabel);
+        //修改了Supplier的逻辑，直接查找全图。新增edges和vertices方法，高效（可以使用索引）查找ids相关数据
         this.setIteratorSupplier(() -> (Iterator<S>) (Vertex.class.isAssignableFrom(this.returnClass) ? this.vertices() : this.edges()));
     }
 
@@ -79,6 +81,11 @@ public final class TinkerGraphStep<S extends Element> extends GraphStep<S> imple
                             .collect(Collectors.<Vertex>toList()).iterator();
     }
 
+    /**
+     * 获取对应类型的索引，根据hasContainers中的字段信息
+     * @param indexedClass
+     * @return
+     */
     private HasContainer getIndexKey(final Class<? extends Element> indexedClass) {
         final Set<String> indexedKeys = ((TinkerGraph) this.getTraversal().getGraph().get()).getIndexedKeys(indexedClass);
         return this.hasContainers.stream()
@@ -97,6 +104,12 @@ public final class TinkerGraphStep<S extends Element> extends GraphStep<S> imple
                     StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), Arrays.toString(this.ids), this.hasContainers);
     }
 
+    /**
+     * 返回满足hasContainers条件的Element
+     * @param iterator
+     * @param <E>
+     * @return
+     */
     private final <E extends Element> Iterator<E> iteratorList(final Iterator<E> iterator) {
         final List<E> list = new ArrayList<>();
         while (iterator.hasNext()) {

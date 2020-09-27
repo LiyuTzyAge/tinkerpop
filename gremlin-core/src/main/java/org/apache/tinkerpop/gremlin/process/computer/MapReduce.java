@@ -78,7 +78,7 @@ public interface MapReduce<MK, MV, RK, RV, R> extends Cloneable {
      * A MapReduce job can be map-only, map-reduce-only, or map-combine-reduce.
      * Before executing the particular stage, this method is called to determine if the respective stage is defined.
      * This method should return true if the respective stage as a non-default method implementation.
-     *
+     * 判断是否存在stage阶段
      * @param stage the stage to check for definition.
      * @return whether that stage should be executed.
      */
@@ -87,7 +87,7 @@ public interface MapReduce<MK, MV, RK, RV, R> extends Cloneable {
     /**
      * The map() method is logically executed at all vertices in the graph in parallel.
      * The map() method emits key/value pairs given some analysis of the data in the vertices (and/or its incident edges).
-     *
+     * 对每一个vertex执行map程序，并将结果发送到下一阶段
      * @param vertex  the current vertex being map() processed.
      * @param emitter the component that allows for key/value pairs to be emitted to the next stage.
      */
@@ -111,10 +111,12 @@ public interface MapReduce<MK, MV, RK, RV, R> extends Cloneable {
     /**
      * The reduce() method is logically on the "machine" the respective key hashes to.
      * The reduce() method combines all the values associated with the key and emits key/value pairs.
-     *
-     * @param key     the key that has aggregated values
-     * @param values  the aggregated values associated with the key
+     * 对上一阶段的结果，归并后的结果调用reduce处理程序
+     * @param key     the key that has aggregated values。Key
+     * @param values  the aggregated values associated with the
+     *                key。Queue<Vertex>
      * @param emitter the component that allows for key/value pairs to be emitted as the final result.
+     *                结果输出
      */
     public default void reduce(final MK key, final Iterator<MV> values, final ReduceEmitter<RK, RV> emitter) {
     }
@@ -124,7 +126,7 @@ public interface MapReduce<MK, MV, RK, RV, R> extends Cloneable {
      * The set of vertices in the graph are typically not processed with full parallelism.
      * The vertex set is split into subsets and a worker is assigned to call the MapReduce methods on it method.
      * The default implementation is a no-op.
-     *
+     * 对于大数据量的操作，如无法对每一个vertex完全并行执行时，需要执行。将会将数据分割成多个subSet
      * @param stage the stage of the MapReduce computation
      */
     public default void workerStart(final Stage stage) {
